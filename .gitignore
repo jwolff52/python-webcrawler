@@ -91,4 +91,5 @@ ENV/
 # Project-Specific Settings
 blacklist/
 cache/
+matched/
 Config.py

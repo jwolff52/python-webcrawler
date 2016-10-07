@@ -3,6 +3,7 @@ App.py
 A starting class with most of the functionality that ties everything together
 '''
 import os
+import shutil
 import hashlib
 from datetime import datetime
 
@@ -10,7 +11,7 @@ import requests
 
 import Config
 
-def searchDocument(content):
+def searchDocument(contents):
 	querys = Config.QUERYS
 	matches = []
 	for query in querys:
@@ -141,11 +142,19 @@ if not os.path.exists('./cache'):
 if not os.path.exists('./blacklist'):
 	os.makedirs('./blacklist')
 
+if not os.path.exists('./matched'):
+	os.makedirs('./matched')
+else:
+	shutil.rmtree('./matched')
+	os.makedirs('./matched')
+
 
 BLACKLIST_DIR = os.getcwd() + '/blacklist/'
 CACHE_DIR = os.getcwd() + '/cache/'
+MATCHED_DIR = os.getcwd() + '/matched/'
 
 urls = []
+matched = []
 
 urlsToProcess = []
 for url in Config.ROOT_SITES:
@@ -192,19 +201,22 @@ for url in urlsToProcess:
 			if downloadDocument(w, url):
 				print('Downloaded')
 				print(w.status)
-				if os.path.isfile(file.name):
-					print('File exists')
-					if hashlib.md5(file.read()) != hashlib.md5(w.contents):
-						print('File Changed')
-						file.write(w.contents)
-						print('Wrote File')
-				else:
+				if not os.path.isfile(file.name) or (os.path.isfile(file.name) and hashlib.md5(file.read()) != hashlib.md5(w.contents)):
 					print('New File')
 					file.write(w.contents)
 					print('Wrote File')
 					matches = searchDocument(w.contents)
 					for match in matches:
 						print(match)
+						if match.find('NOT') == -1:
+							if not urlNoProto + fileName in matched:
+								if not os.path.exists(MATCHED_DIR + urlNoProto):
+									os.makedirs(MATCHED_DIR + urlNoProto)
+
+								with open(MATCHED_DIR + urlNoProto + fileName, 'w+b') as matchedFile:
+									matchedFile.write(w.contents)
+
+								matched.append(urlNoProto + fileName)
 				links = searchDocumentForLinks(w.contents)
 				print(str(len(links)) + ' links were found! Adding unique links to urls')
 				for link in links:
