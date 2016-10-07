@@ -164,68 +164,71 @@ try:
 	previousUrl = ''
 
 	for url in urlsToProcess:
-		urlsToProcess.remove(url)
-		if url in urls:
-			pass
-		previousUrl = url
-		urlNoProto = removeProtocol(url)
-		fileName = 'index.html'
-
-		if not hasFileExtension(url):
-			urlNoProto = urlNoProto.replace('.', '/')
-			urlNoProto = addTrailingSlash(urlNoProto)
-		else:
-			splitUrl = urlNoProto.split('.')
-			urlNoProto = ''
-			urlNoProto = splitUrl[0] + '/'
-			for i in range(1, len(splitUrl)-2):
-				urlNoProto = url + '/'
-
-			urlNoProto = urlNoProto + splitUrl[len(splitUrl)-2].split('/')[0] + '/'
-
-			fileName = splitUrl[len(splitUrl)-2].split('/')[1] + '.' + splitUrl[len(splitUrl)-1]
-
-		if not os.path.exists(CACHE_DIR + urlNoProto):
-			os.makedirs(CACHE_DIR + urlNoProto)
-
-		is_blacklisted = False
 		try:
-			with open(BLACKLIST_DIR + urlNoProto + fileName, 'w+b') as blacklist:
-				is_blacklisted = True
-		except:
+			urlsToProcess.remove(url)
+			if url in urls:
+				pass
+			previousUrl = url
+			urlNoProto = removeProtocol(url)
+			fileName = 'index.html'
+
+			if not hasFileExtension(url):
+				urlNoProto = urlNoProto.replace('.', '/')
+				urlNoProto = addTrailingSlash(urlNoProto)
+			else:
+				splitUrl = urlNoProto.split('.')
+				urlNoProto = ''
+				urlNoProto = splitUrl[0] + '/'
+				for i in range(1, len(splitUrl)-2):
+					urlNoProto = url + '/'
+
+				urlNoProto = urlNoProto + splitUrl[len(splitUrl)-2].split('/')[0] + '/'
+
+				fileName = splitUrl[len(splitUrl)-2].split('/')[1] + '.' + splitUrl[len(splitUrl)-1]
+
+			if not os.path.exists(CACHE_DIR + urlNoProto):
+				os.makedirs(CACHE_DIR + urlNoProto)
+
 			is_blacklisted = False
+			try:
+				with open(BLACKLIST_DIR + urlNoProto + fileName, 'w+b') as blacklist:
+					is_blacklisted = True
+			except:
+				is_blacklisted = False
 
-		if not is_blacklisted:
-			with open(CACHE_DIR + urlNoProto + fileName, 'w+b') as file:
-				print('Opened')
-				print('Downloading: ' + url)
-				if downloadDocument(w, url):
-					print('Downloaded')
-					print(w.status)
-					if not os.path.isfile(file.name) or (os.path.isfile(file.name) and hashlib.md5(file.read()) != hashlib.md5(w.contents)):
-						print('New File')
-						file.write(w.contents)
-						print('Wrote File')
-						matches = searchDocument(w.contents)
-						for match in matches:
-							print(match)
-							if match.find('NOT') == -1:
-								if not urlNoProto + fileName in matched:
-									if not os.path.exists(MATCHED_DIR + urlNoProto):
-										os.makedirs(MATCHED_DIR + urlNoProto)
+			if not is_blacklisted:
+				with open(CACHE_DIR + urlNoProto + fileName, 'w+b') as file:
+					print('Opened')
+					print('Downloading: ' + url)
+					if downloadDocument(w, url):
+						print('Downloaded')
+						print(w.status)
+						if not os.path.isfile(file.name) or (os.path.isfile(file.name) and hashlib.md5(file.read()) != hashlib.md5(w.contents)):
+							print('New File')
+							file.write(w.contents)
+							print('Wrote File')
+							matches = searchDocument(w.contents)
+							for match in matches:
+								print(match)
+								if match.find('NOT') == -1:
+									if not urlNoProto + fileName in matched:
+										if not os.path.exists(MATCHED_DIR + urlNoProto):
+											os.makedirs(MATCHED_DIR + urlNoProto)
 
-									with open(MATCHED_DIR + urlNoProto + fileName, 'w+b') as matchedFile:
-										matchedFile.write(w.contents)
+										with open(MATCHED_DIR + urlNoProto + fileName, 'w+b') as matchedFile:
+											matchedFile.write(w.contents)
 
-									matched.append(urlNoProto + fileName)
-					links = searchDocumentForLinks(w.contents)
-					print(str(len(links)) + ' links were found! Adding unique links to urls')
-					for link in links:
-						link = processRelativeLink(link, previousUrl)
-						if not link in urls:
-							print('Link: ' + link)
-							urlsToProcess.append(link)
-							urls.append(link)
+										matched.append(urlNoProto + fileName)
+						links = searchDocumentForLinks(w.contents)
+						print(str(len(links)) + ' links were found! Adding unique links to urls')
+						for link in links:
+							link = processRelativeLink(link, previousUrl)
+							if not link in urls:
+								print('Link: ' + link)
+								urlsToProcess.append(link)
+								urls.append(link)
+		except Exception as e:
+			print(str(e))
 except Exception as e:
 	print(str(e))
 print('Elapsed Time: ' + str(datetime.now() - start_time))
