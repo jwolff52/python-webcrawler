@@ -53,7 +53,7 @@ def searchDocumentForLinks(contents):
 					singleQuote = searchContents[openQuote+1:].find('\'')
 					closeQuote = singleQuote + openQuote
 
-				if not searchContents[openQuote+1:openQuote+8] == "mailto:" and not searchContents[openQuote+1:openQuote+5] == "tel:":
+				if not searchContents[openQuote+1:openQuote+8] == "mailto:" and not searchContents[openQuote+1:openQuote+5] == "tel:" and not searchContents[openQuote+1:openQuote+12] == "javascript:" and not searchContents[openQuote+1:openQuote+1] == "#" and not searchContents[openQuote+1:openQuote+1] == "?":
 					print('Open: ' + str(openQuote))
 					print('Close: ' + str(closeQuote))
 					matches.append(searchContents[openQuote+1:closeQuote+1])
