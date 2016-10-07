@@ -176,7 +176,7 @@ for url in urlsToProcess:
 		fileName = splitUrl[len(splitUrl)-2].split('/')[1] + '.' + splitUrl[len(splitUrl)-1]
 
 	if not os.path.exists(CACHE_DIR + urlNoProto):
-		os.makedirs(CACHE_DIRS + urlNoProto)
+		os.makedirs(CACHE_DIR + urlNoProto)
 
 	is_blacklisted = False
 	try:
