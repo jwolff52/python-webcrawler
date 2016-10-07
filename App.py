@@ -53,9 +53,10 @@ def searchDocumentForLinks(contents):
 					singleQuote = searchContents[openQuote+1:].find('\'')
 					closeQuote = singleQuote + openQuote
 
-				print('Open: ' + str(openQuote))
-				print('Close: ' + str(closeQuote))
-				matches.append(searchContents[openQuote+1:closeQuote+1])
+				if not searchContents[openQuote+1:openQuote+8] == "mailto:" and not searchContents[openQuote+1:openQuote+5] == "tel:":
+					print('Open: ' + str(openQuote))
+					print('Close: ' + str(closeQuote))
+					matches.append(searchContents[openQuote+1:closeQuote+1])
 
 				searchContents = searchContents[openQuote + closeQuote:]
 			else:
@@ -134,97 +135,98 @@ class WebCrawler:
 
 start_time = datetime.now()
 
-w = WebCrawler()
+try:
+	w = WebCrawler()
 
-if not os.path.exists('./cache'):
-	os.makedirs('./cache')
+	if not os.path.exists('./cache'):
+		os.makedirs('./cache')
 
-if not os.path.exists('./blacklist'):
-	os.makedirs('./blacklist')
+	if not os.path.exists('./blacklist'):
+		os.makedirs('./blacklist')
 
-if not os.path.exists('./matched'):
-	os.makedirs('./matched')
-else:
-	shutil.rmtree('./matched')
-	os.makedirs('./matched')
-
-
-BLACKLIST_DIR = os.getcwd() + '/blacklist/'
-CACHE_DIR = os.getcwd() + '/cache/'
-MATCHED_DIR = os.getcwd() + '/matched/'
-
-urls = []
-matched = []
-
-urlsToProcess = []
-for url in Config.ROOT_SITES:
-	urlsToProcess.append(url)
-
-previousUrl = ''
-
-for url in urlsToProcess:
-	urlsToProcess.remove(url)
-	if url in urls:
-		pass
-	previousUrl = url
-	urlNoProto = removeProtocol(url)
-	fileName = 'index.html'
-
-	if not hasFileExtension(url):
-		urlNoProto = urlNoProto.replace('.', '/')
-		urlNoProto = addTrailingSlash(urlNoProto)
+	if not os.path.exists('./matched'):
+		os.makedirs('./matched')
 	else:
-		splitUrl = urlNoProto.split('.')
-		urlNoProto = ''
-		urlNoProto = splitUrl[0] + '/'
-		for i in range(1, len(splitUrl)-2):
-			urlNoProto = url + '/'
+		shutil.rmtree('./matched')
+		os.makedirs('./matched')
 
-		urlNoProto = urlNoProto + splitUrl[len(splitUrl)-2].split('/')[0] + '/'
+	BLACKLIST_DIR = os.getcwd() + '/blacklist/'
+	CACHE_DIR = os.getcwd() + '/cache/'
+	MATCHED_DIR = os.getcwd() + '/matched/'
 
-		fileName = splitUrl[len(splitUrl)-2].split('/')[1] + '.' + splitUrl[len(splitUrl)-1]
+	urls = []
+	matched = []
 
-	if not os.path.exists(CACHE_DIR + urlNoProto):
-		os.makedirs(CACHE_DIR + urlNoProto)
+	urlsToProcess = []
+	for url in Config.ROOT_SITES:
+		urlsToProcess.append(url)
 
-	is_blacklisted = False
-	try:
-		with open(BLACKLIST_DIR + urlNoProto + fileName, 'w+b') as blacklist:
-			is_blacklisted = True
-	except:
+	previousUrl = ''
+
+	for url in urlsToProcess:
+		urlsToProcess.remove(url)
+		if url in urls:
+			pass
+		previousUrl = url
+		urlNoProto = removeProtocol(url)
+		fileName = 'index.html'
+
+		if not hasFileExtension(url):
+			urlNoProto = urlNoProto.replace('.', '/')
+			urlNoProto = addTrailingSlash(urlNoProto)
+		else:
+			splitUrl = urlNoProto.split('.')
+			urlNoProto = ''
+			urlNoProto = splitUrl[0] + '/'
+			for i in range(1, len(splitUrl)-2):
+				urlNoProto = url + '/'
+
+			urlNoProto = urlNoProto + splitUrl[len(splitUrl)-2].split('/')[0] + '/'
+
+			fileName = splitUrl[len(splitUrl)-2].split('/')[1] + '.' + splitUrl[len(splitUrl)-1]
+
+		if not os.path.exists(CACHE_DIR + urlNoProto):
+			os.makedirs(CACHE_DIR + urlNoProto)
+
 		is_blacklisted = False
+		try:
+			with open(BLACKLIST_DIR + urlNoProto + fileName, 'w+b') as blacklist:
+				is_blacklisted = True
+		except:
+			is_blacklisted = False
 
-	if not is_blacklisted:
-		with open(CACHE_DIR + urlNoProto + fileName, 'w+b') as file:
-			print('Opened')
-			print('Downloading: ' + url)
-			if downloadDocument(w, url):
-				print('Downloaded')
-				print(w.status)
-				if not os.path.isfile(file.name) or (os.path.isfile(file.name) and hashlib.md5(file.read()) != hashlib.md5(w.contents)):
-					print('New File')
-					file.write(w.contents)
-					print('Wrote File')
-					matches = searchDocument(w.contents)
-					for match in matches:
-						print(match)
-						if match.find('NOT') == -1:
-							if not urlNoProto + fileName in matched:
-								if not os.path.exists(MATCHED_DIR + urlNoProto):
-									os.makedirs(MATCHED_DIR + urlNoProto)
+		if not is_blacklisted:
+			with open(CACHE_DIR + urlNoProto + fileName, 'w+b') as file:
+				print('Opened')
+				print('Downloading: ' + url)
+				if downloadDocument(w, url):
+					print('Downloaded')
+					print(w.status)
+					if not os.path.isfile(file.name) or (os.path.isfile(file.name) and hashlib.md5(file.read()) != hashlib.md5(w.contents)):
+						print('New File')
+						file.write(w.contents)
+						print('Wrote File')
+						matches = searchDocument(w.contents)
+						for match in matches:
+							print(match)
+							if match.find('NOT') == -1:
+								if not urlNoProto + fileName in matched:
+									if not os.path.exists(MATCHED_DIR + urlNoProto):
+										os.makedirs(MATCHED_DIR + urlNoProto)
 
-								with open(MATCHED_DIR + urlNoProto + fileName, 'w+b') as matchedFile:
-									matchedFile.write(w.contents)
+									with open(MATCHED_DIR + urlNoProto + fileName, 'w+b') as matchedFile:
+										matchedFile.write(w.contents)
 
-								matched.append(urlNoProto + fileName)
-				links = searchDocumentForLinks(w.contents)
-				print(str(len(links)) + ' links were found! Adding unique links to urls')
-				for link in links:
-					link = processRelativeLink(link, previousUrl)
-					if not link in urls:
-						print('Link: ' + link)
-						urlsToProcess.append(link)
-						urls.append(link)
-
+									matched.append(urlNoProto + fileName)
+					links = searchDocumentForLinks(w.contents)
+					print(str(len(links)) + ' links were found! Adding unique links to urls')
+					for link in links:
+						link = processRelativeLink(link, previousUrl)
+						if not link in urls:
+							print('Link: ' + link)
+							urlsToProcess.append(link)
+							urls.append(link)
+except Exception as e:
+	print(str(e))
 print('Elapsed Time: ' + str(datetime.now() - start_time))
 print('Done!')
