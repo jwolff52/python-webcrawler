@@ -1,0 +1,5 @@
+ROOT_SITES = []
+ROOT_SITES.append('https://google.com')
+
+QUERYS = []
+QUERYS.append('google')
